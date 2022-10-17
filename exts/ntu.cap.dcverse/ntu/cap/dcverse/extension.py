@@ -1,5 +1,6 @@
 import omni.ext
 import omni.ui as ui
+import omni.kit.commands
 
 
 # Functions and vars are available to other extension as usual in python: `example.python_ext.some_public_function(x)`
@@ -27,6 +28,9 @@ class MyExtension(omni.ext.IExt):
         def on_click():
           self._count += 1
           label.text = f"count: {self._count}"
+          omni.kit.commands.execute('CreatePrimWithDefaultXform',
+                                    prim_type='Cube',
+                                    attributes={'size': 100, 'extent': [(-50, -50, -50), (50, 50, 50)]})
 
         def on_reset():
           self._count = 0
