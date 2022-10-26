@@ -1,11 +1,16 @@
+import carb
 import omni.ext
 import omni.ui as ui
 import omni.kit.commands
+from omni.kit.viewport.utility import get_active_viewport_window
 
 from .panels.overview import OverviewWindow
 from .panels.airecommendation import AIRecommendationWindow
 from .panels.trendreports import TrendReportsWindow
 from .panels.datahalltwin import DataHallTwinWindow
+from . import constants
+from .models import ReticleModel
+from .views import ReticleOverlay
 
 # Any class derived from `omni.ext.IExt` in top level module (defined in `python.modules` of `extension.toml`) will be
 # instantiated when extension gets enabled and `on_startup(ext_id)` will be called. Later when extension gets disabled
@@ -14,26 +19,10 @@ class MyExtension(omni.ext.IExt):
   def on_startup(self, ext_id):
     print("[ntu.cap.dcverse] MyExtension startup")
 
-    # Note the "Window" part of the path that directs the new menu item to the "Window" menu.
-    self._menu_path_overview = f"DCVerse/OPTIMISATION/Overview"
-    self._window_overview = None
-    self._menu_overview = omni.kit.ui.get_editor_menu().add_item(
-        self._menu_path_overview, self._open_overview, True)
-
-    self._menu_path_airecommendation = f"DCVerse/OPTIMISATION/AI Recommendation"
-    self._window_airecommendation = None
-    self._menu_airecommendation = omni.kit.ui.get_editor_menu().add_item(
-        self._menu_path_airecommendation, self._open_airecommendation, True)
-
-    self._menu_path_trendreports = f"DCVerse/OPTIMISATION/Trend Reports"
-    self._window_trendreports = None
-    self._menu_trendreports = omni.kit.ui.get_editor_menu().add_item(
-        self._menu_path_trendreports, self._open_trendreports, True)
-
-    self._menu_path_datahalltwin = f"DCVerse/SIMULATION/Data Hall Twin"
-    self._window_datahalltwin = None
-    self._menu_datahalltwin = omni.kit.ui.get_editor_menu().add_item(
-        self._menu_path_datahalltwin, self._open_datahalltwin, True)
+    # Add menu items to the "Windows" menu.
+    self._add_menu_items()
+    # Add reticle to viewport
+    self._add_viewport_reticle(ext_id)
 
   def on_shutdown(self):
     print("[ntu.cap.dcverse] MyExtension shutdown")
@@ -57,6 +46,40 @@ class MyExtension(omni.ext.IExt):
     if self._window_datahalltwin is not None:
       self._window_datahalltwin.destroy()
       self._window_datahalltwin = None
+
+  def _add_menu_items(self):
+    """Adds the menu items to the 'Windows' menu."""
+    # Note the "Window" part of the path that directs the new menu item to the "Window" menu.
+    self._menu_path_overview = f"DCVerse/OPTIMISATION/Overview"
+    self._window_overview = None
+    self._menu_overview = omni.kit.ui.get_editor_menu().add_item(
+        self._menu_path_overview, self._open_overview, True)
+
+    self._menu_path_airecommendation = f"DCVerse/OPTIMISATION/AI Recommendation"
+    self._window_airecommendation = None
+    self._menu_airecommendation = omni.kit.ui.get_editor_menu().add_item(
+        self._menu_path_airecommendation, self._open_airecommendation, True)
+
+    self._menu_path_trendreports = f"DCVerse/OPTIMISATION/Trend Reports"
+    self._window_trendreports = None
+    self._menu_trendreports = omni.kit.ui.get_editor_menu().add_item(
+        self._menu_path_trendreports, self._open_trendreports, True)
+
+    self._menu_path_datahalltwin = f"DCVerse/SIMULATION/Data Hall Twin"
+    self._window_datahalltwin = None
+    self._menu_datahalltwin = omni.kit.ui.get_editor_menu().add_item(
+        self._menu_path_datahalltwin, self._open_datahalltwin, True)
+
+  def _add_viewport_reticle(self,ext_id):
+    # Reticle should ideally be used with "Fill Viewport" turned off.
+    settings = carb.settings.get_settings()
+    settings.set(constants.SETTING_RESOLUTION_FILL, False)
+
+    viewport_window = get_active_viewport_window()
+    if viewport_window is not None:
+      reticle_model = ReticleModel()
+      self.reticle = ReticleOverlay(reticle_model, viewport_window, ext_id)
+      self.reticle.build_viewport_overlay()
 
   def _open_overview(self, menu, toggled):
     """Handles showing and hiding the window from the 'Windows' menu."""
